@@ -200,7 +200,7 @@ const scanner = {
 
     if (this.stream) {
       this.stream.getTracks().forEach(track => {
-        try { track.stop() } catch (_) {}
+        try { track.stop() } catch (_) { }
       })
       this.stream = null
     }
@@ -217,26 +217,99 @@ const scanner = {
 
 // --- 3. UI Helpers & Formatters ---
 function getFoodEmoji(name) {
-  const n = (name || '').toLowerCase()
-  if (n.includes('milch') || n.includes('milk') || n.includes('hafer') || n.includes('mandel')) return '🥛'
-  if (n.includes('käse') || n.includes('cheese') || n.includes('gouda') || n.includes('parmesan') || n.includes('mozzarella')) return '🧀'
-  if (n.includes('butter') || n.includes('margarine')) return '🧈'
-  if (n.includes('joghurt') || n.includes('yogurt') || n.includes('quark') || n.includes('skyr')) return '🥣'
-  if (n.includes('ei') || n.includes('eier') || n.includes('egg')) return '🥚'
-  if (n.includes('brot') || n.includes('bread') || n.includes('toast') || n.includes('brötchen') || n.includes('baguette')) return '🍞'
-  if (n.includes('tomate') || n.includes('soße') || n.includes('sauce') || n.includes('ketchup') || n.includes('passata') || n.includes('pesto')) return '🍅'
+  const n = ' ' + (name || '').toLowerCase() + ' '
+
+  // 1. Getränke (Kaffee, Tee, Saft, Bier, Wein, Softdrinks)
+  if (n.includes('kaffee') || n.includes('coffee') || n.includes('espresso') || n.includes('cappuccino')) return '☕'
+  if (n.includes('tee') || n.includes('tea') || n.includes('matcha')) return '🍵'
+  if (n.includes('saft') || n.includes('juice') || n.includes('smoothie') || n.includes('nektar')) return '🧃'
+  if (n.includes('bier') || n.includes('pils') || n.includes('radler') || n.includes('weizen') || n.includes('lager') || n.includes('ipa') || /\bbeer\b/.test(n)) return '🍺'
+  if (n.includes('wein') || n.includes('wine') || n.includes('rotwein') || n.includes('weißwein') || n.includes('sekt') || n.includes('prosecco') || n.includes('champagn')) return '🍷'
+  if (n.includes('cocktail') || n.includes('gin') || n.includes('vodka') || n.includes('wodka') || n.includes('rum') || n.includes('whisky') || n.includes('likör') || n.includes('aperol')) return '🍸'
+  if (n.includes('cola') || n.includes('pepsi') || n.includes('fanta') || n.includes('sprite') || n.includes('limo') || n.includes('spezi')) return '🥤'
+  if (n.includes('wasser') || n.includes('water') || n.includes('mineralwasser') || n.includes('sprudel')) return '💧'
+
+  // 2. Früchte & Beeren
+  if (n.includes('erdbeer') || n.includes('himbeer') || n.includes('blaubeer') || n.includes('heidelbeer') || n.includes('brombeer') || n.includes('beere') || n.includes('berry')) return '🍓'
   if (n.includes('apfel') || n.includes('apple')) return '🍎'
   if (n.includes('banane') || n.includes('banana')) return '🍌'
-  if (n.includes('salat') || n.includes('gurke') || n.includes('gemüse') || n.includes('avocado')) return '🥗'
-  if (n.includes('fleisch') || n.includes('wurst') || n.includes('schinken') || n.includes('salami') || n.includes('speck')) return '🥩'
-  if (n.includes('fisch') || n.includes('lachs') || n.includes('thunfisch')) return '🐟'
-  if (n.includes('saft') || n.includes('juice') || n.includes('cola') || n.includes('limo') || n.includes('wasser') || n.includes('drink')) return '🧃'
-  if (n.includes('wein') || n.includes('wine') || n.includes('bier') || n.includes('beer') || n.includes('prosecco')) return '🍷'
-  if (n.includes('marmelade') || n.includes('honig') || n.includes('aufstrich') || n.includes('nutella') || n.includes('creme')) return '🍯'
-  if (n.includes('pasta') || n.includes('nudeln') || n.includes('spaghetti')) return '🍝'
+  if (n.includes('zitrone') || n.includes('lemon') || n.includes('limette') || n.includes('lime')) return '🍋'
+  if (n.includes('orange') || n.includes('mandarine') || n.includes('clementine')) return '🍊'
+  if (n.includes('traube') || n.includes('weintraube') || n.includes('grape')) return '🍇'
+  if (n.includes('melone') || n.includes('melon')) return '🍉'
+  if (n.includes('pfirsich') || n.includes('peach') || n.includes('pflaume') || n.includes('zwetschge')) return '🍑'
+  if (n.includes('kirsche') || n.includes('cherry')) return '🍒'
+  if (n.includes('ananas') || n.includes('pineapple')) return '🍍'
+  if (n.includes('mango')) return '🥭'
+
+  // 3. Müsli, Haferflocken & Cerealien (vor Haferdrink)
+  if (n.includes('haferflocke') || n.includes('müsli') || n.includes('muesli') || n.includes('granola') || n.includes('cerealien') || n.includes('cornflakes') || n.includes('oats')) return '🌾'
+
+  // 4. Snacks, Chips & Süßes (vor Kartoffel)
+  if (n.includes('chips') || n.includes('popcorn') || n.includes('nachos') || n.includes('flips')) return '🍿'
+  if (n.includes('schoko') || n.includes('chocolate') || n.includes('kakao') || n.includes('nutella')) return '🍫'
+  if (n.includes('keks') || n.includes('cookie') || n.includes('waffel') || n.includes('biskuit') || n.includes('gebäck')) return '🍪'
+  if (n.includes('kuchen') || n.includes('torte') || n.includes('cake') || n.includes('muffin')) return '🍰'
+  if (n.includes('bonbon') || n.includes('gummibär') || n.includes('haribo') || n.includes('candy') || n.includes('fruchtgummi')) return '🍬'
+  if (n.includes('eiscreme') || n.includes('speiseeis') || n.includes('ice cream') || n.includes('sorbet') || n.includes('gelato')) return '🍨'
+  if (n.includes('erdnuss') || n.includes('walnuss') || n.includes('haselnuss') || n.includes('cashew') || n.includes('pistazie') || n.includes('nüsse') || n.includes('nuts')) return '🥜'
+
+  // 5. Fleisch & Wurst (vor Ei)
+  if (n.includes('speck') || n.includes('bacon') || n.includes('schinken') || n.includes('prosciutto')) return '🥓'
+  if (n.includes('wurst') || n.includes('wiener') || n.includes('würstchen') || n.includes('bratwurst') || n.includes('salami') || n.includes('leberwurst')) return '🌭'
+  if (n.includes('hähnchen') || n.includes('huhn') || n.includes('chicken') || n.includes('pute') || n.includes('geflügel') || n.includes('nugget')) return '🍗'
+  if (n.includes('fleisch') || n.includes('hack') || n.includes('rind') || n.includes('schwein') || n.includes('steak') || n.includes('beef') || n.includes('meat') || n.includes('burger')) return '🥩'
+
+  // 6. Fisch & Meeresfrüchte
+  if (n.includes('garnele') || n.includes('shrimp') || n.includes('prawn') || n.includes('scampi') || n.includes('meeresfrucht')) return '🦐'
+  if (n.includes('fisch') || n.includes('fish') || n.includes('lachs') || n.includes('salmon') || n.includes('thunfisch') || n.includes('tuna') || n.includes('forelle') || n.includes('hering') || n.includes('kabeljau')) return '🐟'
+
+  // 7. Eier (wortgrenzen-sicher)
+  if (/\b(ei|eier|egg|eggs)\b/i.test(n) || n.includes('hühnerei')) return '🥚'
+
+  // 8. Milch, Molkereiprodukte & pflanzliche Alternativen
+  if (n.includes('käse') || n.includes('cheese') || n.includes('gouda') || n.includes('parmesan') || n.includes('mozzarella') || n.includes('cheddar') || n.includes('feta') || n.includes('brie') || n.includes('camembert') || n.includes('frischkäse') || n.includes('buko') || n.includes('ricotta')) return '🧀'
+  if (n.includes('butter') || n.includes('margarine') || n.includes('ghee')) return '🧈'
+  if (n.includes('joghurt') || n.includes('yogurt') || n.includes('quark') || n.includes('skyr') || n.includes('pudding') || n.includes('grieß')) return '🥣'
+  if (n.includes('sahne') || n.includes('cream') || n.includes('schmand') || n.includes('crème')) return '🍦'
+  if (n.includes('milch') || n.includes('milk') || n.includes('hafer') || n.includes('soja') || n.includes('mandeldrink') || n.includes('drink')) return '🥛'
+
+  // 9. Backwaren & Teig
+  if (n.includes('croissant') || n.includes('hörnchen')) return '🥐'
+  if (n.includes('baguette') || n.includes('brötchen') || n.includes('semmel') || n.includes('ciabatta')) return '🥖'
+  if (n.includes('brot') || n.includes('bread') || n.includes('toast') || n.includes('fladenbrot')) return '🍞'
+  if (n.includes('wrap') || n.includes('tortilla') || n.includes('taco') || n.includes('burrito')) return '🌮'
+  if (n.includes('reis') || n.includes('rice') || n.includes('basmati')) return '🍚'
+
+  // 10. Warme Gerichte & Teigwaren
+  if (n.includes('pasta') || n.includes('nudeln') || n.includes('spaghetti') || n.includes('penne') || n.includes('lasagne') || n.includes('fusilli') || n.includes('tortellini') || n.includes('tagliatelle')) return '🍝'
   if (n.includes('pizza')) return '🍕'
-  if (n.includes('suppe') || n.includes('soup') || n.includes('eintopf')) return '🍲'
-  if (n.includes('schoko') || n.includes('keks') || n.includes('cookie') || n.includes('chips')) return '🍫'
+  if (n.includes('suppe') || n.includes('soup') || n.includes('eintopf') || n.includes('brühe') || n.includes('bouillon')) return '🍲'
+  if (n.includes('ramen') || n.includes('udon') || n.includes('curry') || n.includes('wok')) return '🍜'
+  if (n.includes('gnocchi') || n.includes('dumpling') || n.includes('knödel') || n.includes('maultasche')) return '🥟'
+
+  // 11. Saucen, Aufstriche, Gewürze & Öle
+  if (n.includes('tomate') || n.includes('soße') || n.includes('sauce') || n.includes('ketchup') || n.includes('passata') || n.includes('pesto')) return '🍅'
+  if (n.includes('marmelade') || n.includes('konfitüre') || n.includes('jam') || n.includes('honig') || n.includes('honey') || n.includes('aufstrich') || n.includes('erdnussbutter')) return '🍯'
+  if (n.includes('mayo') || n.includes('mayonnaise') || n.includes('remoulade') || n.includes('aioli')) return '🧴'
+  if (n.includes('öl') || n.includes('oil') || n.includes('essig') || n.includes('vinegar') || n.includes('balsamico')) return '🫒'
+  if (n.includes('senf') || n.includes('mustard')) return '🟡'
+  if (n.includes('salz') || n.includes('salt') || n.includes('pfeffer') || n.includes('pepper') || n.includes('gewürz') || n.includes('spice')) return '🧂'
+
+  // 12. Gemüse & Veggie
+  if (n.includes('avocado')) return '🥑'
+  if (n.includes('gurke') || n.includes('cucumber') || n.includes('zucchini')) return '🥒'
+  if (n.includes('karotte') || n.includes('möhre') || n.includes('carrot')) return '🥕'
+  if (n.includes('kartoffel') || n.includes('potato') || n.includes('pommes')) return '🥔'
+  if (n.includes('mais') || n.includes('corn')) return '🌽'
+  if (n.includes('salat') || n.includes('lettuce') || n.includes('rucola') || n.includes('spinat') || n.includes('greens')) return '🥗'
+  if (n.includes('zwiebel') || n.includes('onion') || n.includes('knoblauch') || n.includes('garlic') || n.includes('lauch')) return '🧅'
+  if (n.includes('paprika') || n.includes('chili') || n.includes('peperoni') || n.includes('jalapeno')) return '🫑'
+  if (n.includes('pilz') || n.includes('champignon') || n.includes('mushroom')) return '🍄'
+  if (n.includes('brokkoli') || n.includes('broccoli') || n.includes('blumenkohl')) return '🥦'
+  if (n.includes('bohne') || n.includes('bean') || n.includes('erbse') || n.includes('linse') || n.includes('kichererbse') || n.includes('edamame')) return '🫘'
+  if (n.includes('tofu') || n.includes('tempeh') || n.includes('seitan')) return '🧊'
+
   return '📦'
 }
 
