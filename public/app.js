@@ -374,8 +374,9 @@ function checkAuth() {
 async function loadOpenItems() {
   loadingState.hidden = false
   emptyState.hidden = true
+  itemsListEl.hidden = true
   itemsListEl.innerHTML = ''
-  itemsCountCaption.textContent = 'Wird aktualisiert...'
+  itemsCountCaption.textContent = 'Wird geladen...'
 
   try {
     const data = await api.getItems()
@@ -389,6 +390,9 @@ async function loadOpenItems() {
     }
     showToast('Fehler beim Laden der offenen Lebensmittel.')
     console.error('Error loading items:', err)
+    emptyState.hidden = false
+    itemsListEl.hidden = true
+    itemsCountCaption.textContent = 'Fehler beim Laden'
   } finally {
     loadingState.hidden = true
   }
@@ -400,11 +404,13 @@ function renderItemsList(items) {
 
   if (!items || items.length === 0) {
     emptyState.hidden = false
+    itemsListEl.hidden = true
     itemsCountCaption.textContent = 'Keine geöffneten Lebensmittel'
     return
   }
 
   emptyState.hidden = true
+  itemsListEl.hidden = false
   itemsCountCaption.textContent = items.length === 1 ? '1 geöffnetes Lebensmittel' : `${items.length} geöffnete Lebensmittel`
 
   items.forEach(item => {
