@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="NomNom">
+  <meta name="description" content="NomNom – Welche Lebensmittel sind aktuell geöffnet und seit wann?">
+  <title>NomNom – Geöffnete Lebensmittel</title>
+
+  <!-- PWA Manifest & Icons -->
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
+  <link rel="apple-touch-icon" href="/icons/icon-512.png">
+
+  <!-- Local Fonts Preload -->
+  <link rel="preload" href="/fonts/plus-jakarta-sans-v12-latin-regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/plus-jakarta-sans-v12-latin-700.woff2" as="font" type="font/woff2" crossorigin>
+
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div id="app" class="app-container">
+    <!-- Top Header -->
+    <header class="app-header" id="app-header">
+      <div class="header-brand" id="header-home-btn" role="button" tabindex="0">
+        <div class="brand-icon-wrapper">
+          <img src="/icons/icon.svg" alt="NomNom Logo" class="brand-logo" width="32" height="32">
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">NomNom</span>
+          <span class="brand-subtitle">Haushalt</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="btn-refresh" class="btn-icon" title="Aktualisieren" aria-label="Liste aktualisieren">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.85.83 6.72 2.24L21 8"/>
+            <path d="M21 3v5h-5"/>
+          </svg>
+        </button>
+        <button id="btn-settings-open" class="btn-icon" title="Einstellungen" aria-label="Einstellungen öffnen">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Global Feedback / Toast -->
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+    <!-- Main Content Area -->
+    <main class="app-main" id="main-content">
+      <!-- VIEW 1: Main Items List -->
+      <section id="view-list" class="view view-active" aria-label="Geöffnete Lebensmittel">
+        <div class="view-header">
+          <div>
+            <h1 class="page-title">Geöffnete Lebensmittel</h1>
+            <p class="page-caption" id="items-count-caption">Wird geladen...</p>
+          </div>
+        </div>
+
+        <div id="loading-state" class="state-container" hidden>
+          <div class="spinner"></div>
+          <p class="state-text">Lade Lebensmittel...</p>
+        </div>
+
+        <div id="empty-state" class="state-container" hidden>
+          <div class="empty-illustration">🥣</div>
+          <h2 class="empty-title">Keine offenen Lebensmittel</h2>
+          <p class="empty-description">Tippe auf den Scanner, um ein geöffnetes Lebensmittel zu erfassen.</p>
+          <button id="btn-empty-scan" class="btn btn-secondary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <path d="M7 7h.01M17 7h.01M7 17h.01M17 17h.01"/>
+            </svg>
+            Barcode scannen
+          </button>
+        </div>
+
+        <ul id="items-list" class="items-list" aria-label="Liste der offenen Lebensmittel">
+          <!-- Dynamically populated -->
+        </ul>
+
+        <!-- Floating Action Button for Scanner -->
+        <button id="fab-scan" class="fab-scan" aria-label="Barcode scannen" title="Barcode scannen">
+          <svg class="fab-icon" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 7V5a2 2 0 0 1 2-2h2"/>
+            <path d="M17 3h2a2 2 0 0 1 2 2v2"/>
+            <path d="M21 17v2a2 2 0 0 1-2 2h-2"/>
+            <path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+            <line x1="7" y1="12" x2="17" y2="12" stroke-width="2.5"/>
+            <line x1="3" y1="12" x2="4" y2="12"/>
+            <line x1="20" y1="12" x2="21" y2="12"/>
+          </svg>
+          <span class="fab-label">Scannen</span>
+        </button>
+      </section>
+
+      <!-- VIEW 2: Barcode Scanner -->
+      <section id="view-scanner" class="view view-scanner" hidden aria-label="Kamera Barcode-Scanner">
+        <div class="scanner-header">
+          <button id="btn-scanner-close" class="btn-icon btn-scanner-close" aria-label="Scanner schließen">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+          <span class="scanner-title">Barcode scannen</span>
+          <button id="btn-scanner-torch" class="btn-icon btn-scanner-torch" aria-label="Licht umschalten" hidden>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="scanner-viewport" id="scanner-viewport">
+          <video id="scanner-video" class="scanner-video" playsinline muted autoplay></video>
+          <div class="scanner-reticle">
+            <div class="reticle-corner top-left"></div>
+            <div class="reticle-corner top-right"></div>
+            <div class="reticle-corner bottom-left"></div>
+            <div class="reticle-corner bottom-right"></div>
+            <div class="scanner-laser"></div>
+          </div>
+          <div id="scanner-loading" class="scanner-overlay-msg" hidden>
+            <div class="spinner spinner-light"></div>
+            <span>Produkt wird gesucht...</span>
+          </div>
+        </div>
+
+        <div class="scanner-footer">
+          <p id="scanner-instruction" class="scanner-instruction">Halte den Barcode mittig in das Zielfenster</p>
+          <button id="btn-manual-entry-toggle" class="btn btn-ghost btn-sm">
+            Tastatur / Barcode manuell eingeben
+          </button>
+
+          <!-- Fallback or Manual input drawer -->
+          <div id="manual-barcode-box" class="manual-barcode-box" hidden>
+            <div class="input-group">
+              <input type="text" id="input-manual-barcode" placeholder="z. B. 4001234567890" inputmode="numeric" autocomplete="off">
+              <button id="btn-manual-barcode-submit" class="btn btn-primary btn-sm">Suchen</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 3: Product Detail View -->
+      <section id="view-product" class="view" hidden aria-label="Produktdetails">
+        <div class="view-header with-back">
+          <button id="btn-product-back" class="btn-back" aria-label="Zurück zur Liste">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"/>
+              <polyline points="12 19 5 12 12 5"/>
+            </svg>
+            Zurück
+          </button>
+        </div>
+
+        <div class="product-detail-card">
+          <div class="detail-hero">
+            <div id="detail-emoji" class="detail-emoji">📦</div>
+            <h2 id="detail-name" class="detail-name">Produktname</h2>
+            <div id="detail-barcode" class="detail-barcode">Barcode</div>
+          </div>
+
+          <div class="detail-status-card" id="detail-status-box">
+            <div class="status-indicator-row">
+              <span id="detail-status-dot" class="status-dot"></span>
+              <span id="detail-status-label" class="status-label">Geöffnet</span>
+              <span id="detail-age-badge" class="age-badge">Heute</span>
+            </div>
+            <p id="detail-time-text" class="detail-time-text">04.10.2026 · 18:42 Uhr</p>
+          </div>
+
+          <div class="detail-actions" id="detail-actions">
+            <!-- Open state actions -->
+            <div id="actions-opened" class="actions-group">
+              <button id="btn-action-finish" class="btn btn-success btn-lg">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                Erledigt
+              </button>
+              <button id="btn-action-reregister" class="btn btn-secondary btn-lg">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.19"/>
+                </svg>
+                Neu registrieren
+              </button>
+            </div>
+
+            <!-- Closed state actions -->
+            <div id="actions-closed" class="actions-group" hidden>
+              <p class="status-note">Dieses Produkt ist aktuell nicht geöffnet.</p>
+              <button id="btn-action-open" class="btn btn-primary btn-lg">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="16"/>
+                  <line x1="8" y1="12" x2="16" y2="12"/>
+                </svg>
+                Jetzt öffnen
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 4: New Product (Unknown Barcode) -->
+      <section id="view-new-product" class="view" hidden aria-label="Neues Produkt">
+        <div class="view-header with-back">
+          <button id="btn-new-product-back" class="btn-back" aria-label="Abbrechen">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"/>
+              <polyline points="12 19 5 12 12 5"/>
+            </svg>
+            Abbrechen
+          </button>
+        </div>
+
+        <div class="product-detail-card">
+          <div class="detail-hero">
+            <div class="detail-emoji">✨</div>
+            <h2 class="detail-name">Neues Produkt</h2>
+            <div id="new-product-barcode-label" class="detail-barcode">Barcode: -</div>
+          </div>
+
+          <p class="form-instruction">
+            Für diesen Barcode wurden noch keine Daten gefunden. Wie heißt das Produkt?
+          </p>
+
+          <form id="form-new-product" class="product-form">
+            <div class="form-field">
+              <label for="input-new-product-name" class="form-label">Produktname</label>
+              <input type="text" id="input-new-product-name" class="form-input" placeholder="z. B. Hafermilch Barista 1L" required autocomplete="off" autofocus>
+            </div>
+
+            <div class="actions-group">
+              <button type="submit" id="btn-save-and-open" class="btn btn-primary btn-lg">
+                Speichern & Jetzt öffnen
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- VIEW 5: Settings / Household Credentials -->
+      <section id="view-settings" class="view" hidden aria-label="Einstellungen">
+        <div class="view-header with-back">
+          <button id="btn-settings-back" class="btn-back" aria-label="Zurück">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"/>
+              <polyline points="12 19 5 12 12 5"/>
+            </svg>
+            Zurück
+          </button>
+        </div>
+
+        <div class="settings-card">
+          <h2 class="section-title">Haushalt-Verbindung</h2>
+          <p class="settings-caption">Jeder Worker repräsentiert einen Haushalt. Der Zugangscode schützt deine Lebensmittel-Datenbank.</p>
+
+          <form id="form-settings" class="settings-form">
+            <div class="form-field">
+              <label for="input-server-url" class="form-label">Server-URL</label>
+              <input type="url" id="input-server-url" class="form-input" placeholder="https://..." required>
+              <span class="field-hint">Normalerweise die aktuelle Adresse deiner App</span>
+            </div>
+
+            <div class="form-field">
+              <label for="input-auth-token" class="form-label">Haushalt-Zugangscode (AUTH_TOKEN)</label>
+              <input type="password" id="input-auth-token" class="form-input" placeholder="Dein geheimer Worker-Token" required>
+            </div>
+
+            <div class="actions-group">
+              <button type="submit" class="btn btn-primary btn-lg">Einstellungen speichern</button>
+              <button type="button" id="btn-logout" class="btn btn-danger btn-outline">
+                Haushalt verlassen / Zugangsdaten löschen
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- VIEW 6: First-time Onboarding / Setup Screen -->
+      <div id="modal-onboarding" class="modal-fullscreen" hidden>
+        <div class="onboarding-card">
+          <div class="onboarding-brand">
+            <img src="/icons/icon.svg" alt="NomNom" class="onboarding-logo" width="64" height="64">
+            <h1 class="onboarding-title">Willkommen bei NomNom</h1>
+            <p class="onboarding-desc">Einfaches Food-Tracking: Welche Lebensmittel sind aktuell geöffnet und seit wann?</p>
+          </div>
+
+          <form id="form-onboarding" class="onboarding-form">
+            <div class="form-field">
+              <label for="setup-server-url" class="form-label">Server-Adresse</label>
+              <input type="url" id="setup-server-url" class="form-input" placeholder="https://..." required>
+            </div>
+
+            <div class="form-field">
+              <label for="setup-auth-token" class="form-label">Haushalt-Zugangscode</label>
+              <input type="password" id="setup-auth-token" class="form-input" placeholder="Geheimer Token aus dem Worker" required>
+              <span class="field-hint">Wurde in Worker Secrets als AUTH_TOKEN hinterlegt.</span>
+            </div>
+
+            <button type="submit" id="btn-onboarding-submit" class="btn btn-primary btn-lg btn-block">
+              Verbinden
+            </button>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/app.js" type="module"></script>
+</body>
+</html>

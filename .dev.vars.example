@@ -1,0 +1,2 @@
+# Worker secrets for local development
+AUTH_TOKEN=change-this-to-your-secure-household-token

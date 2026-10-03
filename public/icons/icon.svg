@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff8f3"/>
+      <stop offset="100%" stop-color="#faeee3"/>
+    </linearGradient>
+    <linearGradient id="carton" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff6b4a"/>
+      <stop offset="100%" stop-color="#e84e2a"/>
+    </linearGradient>
+    <linearGradient id="leaf" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22c55e"/>
+      <stop offset="100%" stop-color="#15803d"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#b45309" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <!-- Background rounded rect -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- Main illustration group -->
+  <g filter="url(#shadow)" transform="translate(48, 48) scale(0.8125)">
+    <!-- Milk carton container -->
+    <path d="M120 180 L180 120 L300 120 L360 180 L360 440 C360 456 348 468 332 468 L148 468 C132 468 120 456 120 440 Z" fill="url(#carton)" />
+    
+    <!-- Carton fold & top lid -->
+    <path d="M180 120 L240 70 L300 120 Z" fill="#ff866b"/>
+    <circle cx="240" cy="155" r="26" fill="#ffffff" opacity="0.95"/>
+    <circle cx="240" cy="155" r="16" fill="#ff6b4a"/>
+
+    <!-- Carton front facet highlight -->
+    <path d="M120 180 L240 180 L240 468 L148 468 C132 468 120 456 120 440 Z" fill="#ffffff" opacity="0.12"/>
+
+    <!-- Letter 'N' or icon on carton -->
+    <text x="180" y="350" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="110" fill="#ffffff" text-anchor="middle" letter-spacing="-2">N</text>
+
+    <!-- Fresh organic plant sprout looping up from side -->
+    <path d="M260 410 C320 410 390 380 400 300 C410 220 370 170 410 130 C430 110 460 120 450 150 C435 195 440 240 430 280 C415 360 350 430 270 430 Z" fill="url(#leaf)"/>
+    <ellipse cx="430" cy="130" rx="36" ry="24" transform="rotate(-35 430 130)" fill="url(#leaf)"/>
+    <ellipse cx="380" cy="190" rx="30" ry="18" transform="rotate(-20 380 190)" fill="#4ade80"/>
+    <ellipse cx="435" cy="245" rx="32" ry="20" transform="rotate(25 435 245)" fill="url(#leaf)"/>
+  </g>
+</svg>

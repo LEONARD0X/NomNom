@@ -1,0 +1,26 @@
+{
+  "name": "NomNom – Geöffnete Lebensmittel",
+  "short_name": "NomNom",
+  "description": "Welche Lebensmittel sind aktuell geöffnet und seit wann?",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fafaf9",
+  "theme_color": "#ffffff",
+  "categories": ["food", "utilities", "lifestyle"],
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
