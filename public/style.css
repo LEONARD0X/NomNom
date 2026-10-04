@@ -1157,24 +1157,25 @@ html.dark .detail-product-image {
   border: 1px solid var(--border-subtle);
 }
 
-/* Subtle OpenFoodFacts Refresh Button */
+/* OpenFoodFacts Refresh Button - Same layout as Erledigt button (width, rounded corners, padding), keeping subtle colors */
 .detail-refresh-section {
   margin-top: 14px;
-  display: flex;
-  justify-content: center;
+  width: 100%;
 }
 
 .btn-subtle-refresh {
+  width: 100%;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 7px 14px;
+  padding: 8px 14px;
   background: transparent;
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-md);
   color: var(--text-muted);
   font-family: inherit;
-  font-size: 0.82rem;
+  font-size: 0.84rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -1188,7 +1189,7 @@ html.dark .detail-product-image {
 }
 
 .btn-subtle-refresh:active {
-  transform: scale(0.97);
+  transform: scale(0.98);
 }
 
 .btn-subtle-refresh.loading {

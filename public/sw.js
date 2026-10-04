@@ -1,5 +1,5 @@
 // NomNom Service Worker - App Shell Caching
-const CACHE_NAME = 'nomnom-v9'
+const CACHE_NAME = 'nomnom-v12'
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',

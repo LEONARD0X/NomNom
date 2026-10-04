@@ -848,9 +848,11 @@ function showProductDetail(productData) {
     // FALL A: Currently Open
     const formatted = formatOpenedDate(currentItem.opened_at)
     statusDot.className = 'status-dot'
-    statusLabel.textContent = 'Geöffnet'
-    ageBadge.hidden = false
-    ageBadge.textContent = formatted.badge
+    const openStatusText = formatted.badge === 'Heute'
+      ? 'Geöffnet heute'
+      : (formatted.badge === 'Gestern' ? 'Geöffnet gestern' : `Geöffnet ${formatted.badge}`)
+    statusLabel.textContent = openStatusText
+    if (ageBadge) ageBadge.hidden = true
     timeText.textContent = formatted.fullText
 
     statusBox.classList.add('clickable')
@@ -869,7 +871,7 @@ function showProductDetail(productData) {
     // FALL B: Not currently open
     statusDot.className = 'status-dot inactive'
     statusLabel.textContent = 'Aktuell nicht geöffnet'
-    ageBadge.hidden = true
+    if (ageBadge) ageBadge.hidden = true
     timeText.textContent = 'Noch keine aktive Erfassung im Haushalt.'
 
     statusBox.classList.remove('clickable')
@@ -1197,9 +1199,15 @@ function setupEventListeners() {
       const res = await api.updateItem(currentItem.id, { opened_at: parsed.toISOString() })
       currentItem.opened_at = res.item.opened_at
 
-      // Update UI texts & badge
+      // Update UI texts & status label
       const formatted = formatOpenedDate(currentItem.opened_at)
-      document.getElementById('detail-age-badge').textContent = formatted.badge
+      const openStatusText = formatted.badge === 'Heute'
+        ? 'Geöffnet heute'
+        : (formatted.badge === 'Gestern' ? 'Geöffnet gestern' : `Geöffnet ${formatted.badge}`)
+      const statusLabel = document.getElementById('detail-status-label')
+      if (statusLabel) statusLabel.textContent = openStatusText
+      const ageBadge = document.getElementById('detail-age-badge')
+      if (ageBadge) ageBadge.hidden = true
       document.getElementById('detail-time-text').textContent = formatted.fullText
 
       showToast('✓ Datum aktualisiert')
