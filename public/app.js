@@ -21,23 +21,28 @@ const api = {
 
     try {
       const response = await fetch(url, { ...options, headers })
-      if (response.status === 401) {
-        throw new Error('UNAUTHORIZED')
-      }
-
       const data = await response.json().catch(() => ({}))
+
       if (!response.ok) {
-        const error = new Error(data.error || `HTTP error ${response.status}`)
+        const message = data.error || (response.status === 401 ? 'Ungültiger Zugangscode' : `Serverfehler (${response.status})`)
+        const error = new Error(message)
         // @ts-ignore
         error.status = response.status
+        // @ts-ignore
+        error.code = data.code || (response.status === 401 ? 'UNAUTHORIZED' : 'HTTP_ERROR')
         // @ts-ignore
         error.data = data
         throw error
       }
       return data
     } catch (err) {
-      if (err.name === 'TypeError' && err.message.includes('fetch')) {
-        throw new Error('Verbindung zum Server fehlgeschlagen. Bitte prüfe die Server-Adresse.')
+      if (err.name === 'TypeError' && (err.message.includes('fetch') || err.message.includes('NetworkError') || err.message.includes('Failed to fetch'))) {
+        const netErr = new Error(`Server unter "${this.baseUrl}" nicht erreichbar. Bitte prüfe Internetverbindung und Server-Adresse.`)
+        // @ts-ignore
+        netErr.status = 0
+        // @ts-ignore
+        netErr.code = 'NETWORK_ERROR'
+        throw netErr
       }
       throw err
     }
@@ -426,6 +431,18 @@ function switchView(viewName) {
   }
 }
 
+function setFormError(elementId, message) {
+  const el = document.getElementById(elementId)
+  if (!el) return
+  if (message) {
+    el.textContent = message
+    el.hidden = false
+  } else {
+    el.textContent = ''
+    el.hidden = true
+  }
+}
+
 // Check Authentication / Setup
 function checkAuth() {
   const token = localStorage.getItem('nomnom_token')
@@ -434,6 +451,7 @@ function checkAuth() {
   if (!token) {
     document.getElementById('setup-server-url').value = url
     document.getElementById('setup-auth-token').value = ''
+    setFormError('onboarding-error-box', '')
     modalOnboarding.hidden = false
     return false
   }
@@ -456,13 +474,14 @@ async function loadOpenItems() {
     appState.items = data.items || []
     renderItemsList(appState.items)
   } catch (err) {
-    if (err.message === 'UNAUTHORIZED') {
-      showToast('Zugangscode ungültig. Bitte neu eingeben.')
+    console.error('Error loading items:', err)
+    if (err.status === 401 || err.code === 'UNAUTHORIZED' || err.code === 'INVALID_TOKEN') {
+      showToast(err.message || 'Zugangscode ungültig. Bitte neu eingeben.')
+      setFormError('onboarding-error-box', err.message || 'Zugangscode ungültig. Bitte neu eingeben.')
       modalOnboarding.hidden = false
       return
     }
-    showToast('Fehler beim Laden der offenen Lebensmittel.')
-    console.error('Error loading items:', err)
+    showToast(err.message || 'Fehler beim Laden der offenen Lebensmittel.')
     emptyState.hidden = false
     itemsListEl.hidden = true
     itemsCountCaption.textContent = 'Fehler beim Laden'
@@ -578,16 +597,18 @@ async function handleBarcodeDetected(barcode) {
     showProductDetail(data)
   } catch (err) {
     overlayLoading.hidden = true
+    console.error('Error fetching barcode product:', err)
 
     // Check if product is unknown (404)
     if (err.status === 404) {
       appState.pendingBarcode = barcode
       showNewProductView(barcode)
-    } else if (err.message === 'UNAUTHORIZED') {
-      showToast('Zugangscode ungültig.')
+    } else if (err.status === 401 || err.code === 'UNAUTHORIZED' || err.code === 'INVALID_TOKEN') {
+      showToast(err.message || 'Zugangscode ungültig.')
+      setFormError('onboarding-error-box', err.message || 'Zugangscode ungültig.')
       modalOnboarding.hidden = false
     } else {
-      showToast('Produkt konnte nicht geladen werden.')
+      showToast(err.message || 'Produkt konnte nicht geladen werden.')
       switchView('list')
     }
   }
@@ -764,8 +785,8 @@ function setupEventListeners() {
       showToast('✓ Als erledigt markiert')
       switchView('list')
     } catch (err) {
-      showToast('Fehler beim Markieren als erledigt.')
-      console.error(err)
+      showToast(err.message || 'Fehler beim Markieren als erledigt.')
+      console.error('Finish item failed:', err)
     } finally {
       btn.disabled = false
     }
@@ -783,8 +804,8 @@ function setupEventListeners() {
       showToast('↻ Neu registriert')
       switchView('list')
     } catch (err) {
-      showToast('Fehler beim Neu-Registrieren.')
-      console.error(err)
+      showToast(err.message || 'Fehler beim Neu-Registrieren.')
+      console.error('Reregister item failed:', err)
     } finally {
       btn.disabled = false
     }
@@ -802,8 +823,8 @@ function setupEventListeners() {
       showToast('Geöffnet')
       switchView('list')
     } catch (err) {
-      showToast('Fehler beim Öffnen des Produkts.')
-      console.error(err)
+      showToast(err.message || 'Fehler beim Öffnen des Produkts.')
+      console.error('Open item failed:', err)
     } finally {
       btn.disabled = false
     }
@@ -829,8 +850,8 @@ function setupEventListeners() {
       showToast(`"${product.name}" gespeichert und geöffnet`)
       switchView('list')
     } catch (err) {
-      showToast('Fehler beim Speichern des Produkts.')
-      console.error(err)
+      showToast(err.message || 'Fehler beim Speichern des Produkts.')
+      console.error('Save and open failed:', err)
     } finally {
       submitBtn.disabled = false
     }
@@ -838,6 +859,7 @@ function setupEventListeners() {
 
   // Settings Open Button
   document.getElementById('btn-settings-open').addEventListener('click', () => {
+    setFormError('settings-error-box', '')
     document.getElementById('input-server-url').value = api.baseUrl
     document.getElementById('input-auth-token').value = api.token
     switchView('settings')
@@ -848,15 +870,46 @@ function setupEventListeners() {
     switchView('list')
   })
 
+  // Clear errors on typing
+  document.getElementById('setup-server-url').addEventListener('input', () => setFormError('onboarding-error-box', ''))
+  document.getElementById('setup-auth-token').addEventListener('input', () => setFormError('onboarding-error-box', ''))
+  document.getElementById('input-server-url').addEventListener('input', () => setFormError('settings-error-box', ''))
+  document.getElementById('input-auth-token').addEventListener('input', () => setFormError('settings-error-box', ''))
+
   // Settings Form Submit
   document.getElementById('form-settings').addEventListener('submit', async (e) => {
     e.preventDefault()
+    setFormError('settings-error-box', '')
     const url = document.getElementById('input-server-url').value.trim()
     const token = document.getElementById('input-auth-token').value.trim()
+    const submitBtn = e.target.querySelector('button[type="submit"]')
+    if (submitBtn) {
+      submitBtn.disabled = true
+      submitBtn.textContent = 'Verbinde...'
+    }
 
     try {
       api.init(url, token)
-      // Test credentials with items call
+
+      // Step 1: Health / Diagnostic check
+      try {
+        const health = await api.getHealth()
+        if (health) {
+          if (!health.auth?.configured) {
+            throw new Error('AUTH_TOKEN Secret fehlt auf dem Server! Bitte im Cloudflare Dashboard unter Settings -> Variables and Secrets als Secret eintragen.')
+          }
+          if (health.database?.status !== 'ok') {
+            throw new Error(`Datenbank-Fehler (${health.database?.error || health.database?.status}). Wurde die D1-Migration auf der Remote-Datenbank ausgeführt?`)
+          }
+        }
+      } catch (healthErr) {
+        if (healthErr.message && (healthErr.message.includes('AUTH_TOKEN') || healthErr.message.includes('Datenbank'))) {
+          throw healthErr
+        }
+        console.warn('Health check unreachable:', healthErr)
+      }
+
+      // Step 2: Test credentials with items call
       await api.getItems()
 
       localStorage.setItem('nomnom_url', url)
@@ -865,10 +918,14 @@ function setupEventListeners() {
       showToast('Einstellungen gespeichert')
       switchView('list')
     } catch (err) {
-      if (err.message === 'UNAUTHORIZED') {
-        showToast('Fehler: Ungültiger Zugangscode')
-      } else {
-        showToast('Verbindungstest fehlgeschlagen')
+      console.error('Settings test failed:', err)
+      const errorMsg = err.message || 'Verbindungstest fehlgeschlagen.'
+      setFormError('settings-error-box', errorMsg)
+      showToast('Fehler bei Verbindung')
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false
+        submitBtn.textContent = 'Einstellungen speichern'
       }
     }
   })
@@ -886,6 +943,7 @@ function setupEventListeners() {
   // Onboarding Form Submit
   document.getElementById('form-onboarding').addEventListener('submit', async (e) => {
     e.preventDefault()
+    setFormError('onboarding-error-box', '')
     const url = document.getElementById('setup-server-url').value.trim()
     const token = document.getElementById('setup-auth-token').value.trim()
     const submitBtn = document.getElementById('btn-onboarding-submit')
@@ -895,6 +953,26 @@ function setupEventListeners() {
 
     try {
       api.init(url, token)
+
+      // Step 1: Diagnostic health check
+      try {
+        const health = await api.getHealth()
+        if (health) {
+          if (!health.auth?.configured) {
+            throw new Error('AUTH_TOKEN Secret fehlt auf dem Server! Bitte im Cloudflare Dashboard unter Settings -> Variables and Secrets als Secret eintragen.')
+          }
+          if (health.database?.status !== 'ok') {
+            throw new Error(`Datenbank-Fehler (${health.database?.error || health.database?.status}). Wurde die D1-Migration auf der Remote-Datenbank ausgeführt?`)
+          }
+        }
+      } catch (healthErr) {
+        if (healthErr.message && (healthErr.message.includes('AUTH_TOKEN') || healthErr.message.includes('Datenbank'))) {
+          throw healthErr
+        }
+        console.warn('Health check unreachable:', healthErr)
+      }
+
+      // Step 2: Authenticated request
       await api.getItems()
 
       localStorage.setItem('nomnom_url', url)
@@ -904,11 +982,10 @@ function setupEventListeners() {
       showToast('Erfolgreich verbunden!')
       switchView('list')
     } catch (err) {
-      if (err.message === 'UNAUTHORIZED') {
-        showToast('Ungültiger Zugangscode')
-      } else {
-        showToast('Server nicht erreichbar')
-      }
+      console.error('Onboarding connection failed:', err)
+      const errorMsg = err.message || 'Server nicht erreichbar.'
+      setFormError('onboarding-error-box', errorMsg)
+      showToast('Verbindung fehlgeschlagen')
     } finally {
       submitBtn.disabled = false
       submitBtn.textContent = 'Verbinden'

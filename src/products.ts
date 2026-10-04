@@ -65,6 +65,10 @@ productRoutes.get('/:barcode', async (c) => {
   }
 
   const db = c.env.DB
+  if (!db) {
+    console.error('[NomNom D1 Error] Database binding c.env.DB is missing in Worker environment.')
+    return c.json({ error: 'D1 Datenbank-Binding "DB" fehlt in der Worker-Konfiguration.', code: 'DB_BINDING_MISSING' }, 500)
+  }
 
   // 1. Search in local D1 products
   let product = await db
