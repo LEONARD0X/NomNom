@@ -1,11 +1,11 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
-import { Bindings } from './types'
 import { authMiddleware } from './auth'
-import { productRoutes } from './products'
 import { itemRoutes } from './items'
+import { productRoutes } from './products'
 import { proxyRoutes } from './proxy'
+import { Bindings } from './types'
 
 const app = new Hono<{ Bindings: Bindings }>()
 
