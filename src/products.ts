@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { Bindings, Product, Item, ProductDetailResponse } from './types'
+import { Bindings, Item, Product, ProductDetailResponse } from './types'
 
 export const productRoutes = new Hono<{ Bindings: Bindings }>()
 
@@ -12,7 +12,7 @@ async function fetchFromOpenFoodFacts(barcode: string): Promise<string | null> {
     const response = await fetch(url, {
       signal: controller.signal,
       headers: {
-        'User-Agent': 'NomNom-FoodTracker/1.0 (https://github.com/LEONARD0X/NomNom)',
+        'User-Agent': 'NomNomAgent/1.0',
         'Accept': 'application/json'
       }
     })
