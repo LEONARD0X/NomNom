@@ -200,7 +200,22 @@
               <span id="detail-status-label" class="status-label">Geöffnet</span>
               <span id="detail-age-badge" class="age-badge">Heute</span>
             </div>
-            <p id="detail-time-text" class="detail-time-text">04.10.2026 · 18:42 Uhr</p>
+            <div class="time-display-row">
+              <p id="detail-time-text" class="detail-time-text">04.10.2026 · 18:42 Uhr</p>
+              <button type="button" id="btn-toggle-edit-date" class="btn-chip" hidden>Datum anpassen</button>
+            </div>
+
+            <!-- Inline date correction for current item -->
+            <div id="box-edit-date" class="edit-date-drawer" hidden>
+              <label for="input-edit-current-date" class="form-label" style="font-size: 0.8rem; margin-bottom: 4px;">
+                Öffnungsdatum korrigieren:
+              </label>
+              <div class="edit-date-row">
+                <input type="datetime-local" id="input-edit-current-date" class="form-input form-input-sm">
+                <button type="button" id="btn-save-current-date" class="btn btn-primary btn-sm">Speichern</button>
+                <button type="button" id="btn-cancel-edit-date" class="btn btn-chip btn-sm">Abbrechen</button>
+              </div>
+            </div>
           </div>
 
           <div class="detail-actions" id="detail-actions">
@@ -213,18 +228,34 @@
                 </svg>
                 Erledigt
               </button>
-              <button id="btn-action-reregister" class="btn btn-secondary btn-lg">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"
-                  stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.19" />
-                </svg>
-                Neu registrieren
-              </button>
+
+              <div class="reregister-card">
+                <div class="form-field" style="margin-bottom: 8px; text-align: left;">
+                  <label for="input-reregister-date" class="form-label" style="font-size: 0.85rem;">
+                    Neu geöffnet am
+                  </label>
+                  <input type="datetime-local" id="input-reregister-date" class="form-input">
+                </div>
+                <button id="btn-action-reregister" class="btn btn-secondary btn-lg btn-block">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.19" />
+                  </svg>
+                  Neu registrieren
+                </button>
+              </div>
             </div>
 
             <!-- Closed state actions -->
             <div id="actions-closed" class="actions-group" hidden>
               <p class="status-note">Dieses Produkt ist aktuell nicht geöffnet.</p>
+
+              <div class="form-field" style="margin-bottom: 12px; text-align: left;">
+                <label for="input-open-date" class="form-label">Geöffnet am</label>
+                <input type="datetime-local" id="input-open-date" class="form-input">
+                <span class="field-hint">Standard: Aktueller Zeitpunkt</span>
+              </div>
+
               <button id="btn-action-open" class="btn btn-primary btn-lg">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                   stroke-linecap="round" stroke-linejoin="round">
@@ -268,6 +299,12 @@
               <label for="input-new-product-name" class="form-label">Produktname</label>
               <input type="text" id="input-new-product-name" class="form-input"
                 placeholder="z. B. Hafermilch Barista 1L" required autocomplete="off" autofocus>
+            </div>
+
+            <div class="form-field">
+              <label for="input-new-product-date" class="form-label">Geöffnet am</label>
+              <input type="datetime-local" id="input-new-product-date" class="form-input">
+              <span class="field-hint">Standard: Aktueller Zeitpunkt</span>
             </div>
 
             <div class="actions-group">

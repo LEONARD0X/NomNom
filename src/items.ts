@@ -62,13 +62,21 @@ itemRoutes.post('/', async (c) => {
   }
 
   const now = new Date().toISOString()
+  let openedAt = now
+  if (body.opened_at) {
+    const parsed = new Date(body.opened_at)
+    if (!isNaN(parsed.getTime())) {
+      openedAt = parsed.toISOString()
+    }
+  }
+
   const newItem = await db
     .prepare(`
       INSERT INTO items (product_id, opened_at, finished_at, created_at)
       VALUES (?, ?, NULL, ?)
       RETURNING id, product_id, opened_at, finished_at, created_at
     `)
-    .bind(productId, now, now)
+    .bind(productId, openedAt, now)
     .first<Item>()
 
   return c.json({ item: newItem }, 201)
@@ -82,6 +90,10 @@ itemRoutes.post('/:id/finish', async (c) => {
   }
 
   const db = c.env.DB
+  if (!db) {
+    return c.json({ error: 'D1 Datenbank-Binding "DB" fehlt in der Worker-Konfiguration.' }, 500)
+  }
+
   const now = new Date().toISOString()
 
   const updatedItem = await db
@@ -109,6 +121,11 @@ itemRoutes.post('/:id/reregister', async (c) => {
   }
 
   const db = c.env.DB
+  if (!db) {
+    return c.json({ error: 'D1 Datenbank-Binding "DB" fehlt in der Worker-Konfiguration.' }, 500)
+  }
+
+  const body = await c.req.json().catch(() => ({}))
 
   // Find current item
   const currentItem = await db
@@ -121,6 +138,13 @@ itemRoutes.post('/:id/reregister', async (c) => {
   }
 
   const now = new Date().toISOString()
+  let openedAt = now
+  if (body.opened_at) {
+    const parsed = new Date(body.opened_at)
+    if (!isNaN(parsed.getTime())) {
+      openedAt = parsed.toISOString()
+    }
+  }
 
   // Atomically finish current item and create new open item
   const [finishResult, insertResult] = await db.batch([
@@ -129,7 +153,7 @@ itemRoutes.post('/:id/reregister', async (c) => {
       INSERT INTO items (product_id, opened_at, finished_at, created_at)
       VALUES (?, ?, NULL, ?)
       RETURNING id, product_id, opened_at, finished_at, created_at
-    `).bind(currentItem.product_id, now, now)
+    `).bind(currentItem.product_id, openedAt, now)
   ])
 
   const newItem = insertResult.results[0] as Item
@@ -138,4 +162,43 @@ itemRoutes.post('/:id/reregister', async (c) => {
     success: true,
     item: newItem
   })
+})
+
+// PATCH /api/items/:id - Update an item (e.g. correct opened_at timestamp)
+itemRoutes.patch('/:id', async (c) => {
+  const itemId = Number(c.req.param('id'))
+  if (!itemId || isNaN(itemId)) {
+    return c.json({ error: 'Valid item id is required' }, 400)
+  }
+
+  const db = c.env.DB
+  if (!db) {
+    return c.json({ error: 'D1 Datenbank-Binding "DB" fehlt in der Worker-Konfiguration.' }, 500)
+  }
+
+  const body = await c.req.json().catch(() => ({}))
+  if (!body.opened_at) {
+    return c.json({ error: 'opened_at ist erforderlich.' }, 400)
+  }
+
+  const parsed = new Date(body.opened_at)
+  if (isNaN(parsed.getTime())) {
+    return c.json({ error: 'Ungültiges Datumsformat.' }, 400)
+  }
+
+  const updatedItem = await db
+    .prepare(`
+      UPDATE items
+      SET opened_at = ?
+      WHERE id = ?
+      RETURNING id, product_id, opened_at, finished_at, created_at
+    `)
+    .bind(parsed.toISOString(), itemId)
+    .first<Item>()
+
+  if (!updatedItem) {
+    return c.json({ error: 'Item not found' }, 404)
+  }
+
+  return c.json({ success: true, item: updatedItem })
 })
