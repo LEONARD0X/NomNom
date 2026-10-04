@@ -202,7 +202,9 @@
             </div>
             <div class="time-display-row">
               <p id="detail-time-text" class="detail-time-text">04.10.2026 · 18:42 Uhr</p>
-              <button type="button" id="btn-toggle-edit-date" class="btn-chip" hidden>Datum anpassen</button>
+              <svg class="status-expand-icon" id="status-expand-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" hidden>
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
             </div>
 
             <!-- Inline date correction for current item -->
@@ -210,11 +212,7 @@
               <label for="input-edit-current-date" class="form-label" style="font-size: 0.8rem; margin-bottom: 4px;">
                 Öffnungsdatum korrigieren:
               </label>
-              <div class="edit-date-row">
-                <input type="datetime-local" id="input-edit-current-date" class="form-input form-input-sm">
-                <button type="button" id="btn-save-current-date" class="btn btn-primary btn-sm">Speichern</button>
-                <button type="button" id="btn-cancel-edit-date" class="btn btn-chip btn-sm">Abbrechen</button>
-              </div>
+              <input type="datetime-local" id="input-edit-current-date" class="form-input form-input-sm">
             </div>
           </div>
 

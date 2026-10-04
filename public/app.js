@@ -700,10 +700,14 @@ function showProductDetail(productData) {
   const nameEl = document.getElementById('detail-name')
   const barcodeEl = document.getElementById('detail-barcode')
 
+  const statusBox = document.getElementById('detail-status-box')
   const statusDot = document.getElementById('detail-status-dot')
   const statusLabel = document.getElementById('detail-status-label')
   const ageBadge = document.getElementById('detail-age-badge')
   const timeText = document.getElementById('detail-time-text')
+  const expandIcon = document.getElementById('status-expand-icon')
+  const editDrawer = document.getElementById('box-edit-date')
+  const editDateInput = document.getElementById('input-edit-current-date')
 
   const actionsOpened = document.getElementById('actions-opened')
   const actionsClosed = document.getElementById('actions-closed')
@@ -723,17 +727,15 @@ function showProductDetail(productData) {
     ageBadge.textContent = formatted.badge
     timeText.textContent = formatted.fullText
 
+    statusBox.classList.add('clickable')
+    statusBox.classList.remove('expanded')
+    if (expandIcon) expandIcon.hidden = false
+    if (editDrawer) editDrawer.hidden = true
+    if (editDateInput) editDateInput.value = toLocalDatetimeInputString(new Date(currentItem.opened_at))
+
     // Set reregister date picker default to now
     const reregDateInput = document.getElementById('input-reregister-date')
     if (reregDateInput) reregDateInput.value = nowLocalStr
-
-    // Reset inline edit drawer
-    const editDrawer = document.getElementById('box-edit-date')
-    if (editDrawer) editDrawer.hidden = true
-    const editDateInput = document.getElementById('input-edit-current-date')
-    if (editDateInput) editDateInput.value = toLocalDatetimeInputString(new Date(currentItem.opened_at))
-    const editBtn = document.getElementById('btn-toggle-edit-date')
-    if (editBtn) editBtn.hidden = false
 
     actionsOpened.hidden = false
     actionsClosed.hidden = true
@@ -744,9 +746,9 @@ function showProductDetail(productData) {
     ageBadge.hidden = true
     timeText.textContent = 'Noch keine aktive Erfassung im Haushalt.'
 
-    const editBtn = document.getElementById('btn-toggle-edit-date')
-    if (editBtn) editBtn.hidden = true
-    const editDrawer = document.getElementById('box-edit-date')
+    statusBox.classList.remove('clickable')
+    statusBox.classList.remove('expanded')
+    if (expandIcon) expandIcon.hidden = true
     if (editDrawer) editDrawer.hidden = true
 
     // Set open date picker default to now
@@ -956,30 +958,36 @@ function setupEventListeners() {
     }
   })
 
-  // Toggle inline edit for current item opened date
-  document.getElementById('btn-toggle-edit-date').addEventListener('click', () => {
-    const drawer = document.getElementById('box-edit-date')
-    drawer.hidden = !drawer.hidden
-    if (!drawer.hidden) {
-      const currentItem = appState.selectedProductData?.currentItem
-      if (currentItem?.opened_at) {
-        document.getElementById('input-edit-current-date').value = toLocalDatetimeInputString(new Date(currentItem.opened_at))
-      }
-      document.getElementById('input-edit-current-date').focus()
-    }
-  })
+  // Click on Status Card toggles date picker drawer (when item is open)
+  const statusBox = document.getElementById('detail-status-box')
+  statusBox.addEventListener('click', (e) => {
+    // Prevent toggle if clicking directly on the input or its label
+    if (e.target.closest('#input-edit-current-date') || e.target.closest('label')) return
 
-  // Cancel inline edit
-  document.getElementById('btn-cancel-edit-date').addEventListener('click', () => {
-    document.getElementById('box-edit-date').hidden = true
-  })
-
-  // Save corrected date for current item
-  document.getElementById('btn-save-current-date').addEventListener('click', async () => {
     const currentItem = appState.selectedProductData?.currentItem
     if (!currentItem) return
 
-    const dateVal = document.getElementById('input-edit-current-date').value
+    const drawer = document.getElementById('box-edit-date')
+    const isNowExpanded = drawer.hidden
+    drawer.hidden = !isNowExpanded
+    statusBox.classList.toggle('expanded', isNowExpanded)
+
+    if (isNowExpanded) {
+      const editInput = document.getElementById('input-edit-current-date')
+      if (editInput && currentItem.opened_at) {
+        editInput.value = toLocalDatetimeInputString(new Date(currentItem.opened_at))
+      }
+    }
+  })
+
+  // Auto-save date when user picks a date in input-edit-current-date
+  const editCurrentDateInput = document.getElementById('input-edit-current-date')
+  editCurrentDateInput.addEventListener('click', (e) => e.stopPropagation())
+  editCurrentDateInput.addEventListener('change', async (e) => {
+    const currentItem = appState.selectedProductData?.currentItem
+    if (!currentItem) return
+
+    const dateVal = e.target.value
     if (!dateVal) return
 
     const parsed = new Date(dateVal)
@@ -988,25 +996,20 @@ function setupEventListeners() {
       return
     }
 
-    const btn = document.getElementById('btn-save-current-date')
-    btn.disabled = true
     try {
       const res = await api.updateItem(currentItem.id, { opened_at: parsed.toISOString() })
       currentItem.opened_at = res.item.opened_at
 
-      // Update UI
+      // Update UI texts & badge
       const formatted = formatOpenedDate(currentItem.opened_at)
       document.getElementById('detail-age-badge').textContent = formatted.badge
       document.getElementById('detail-time-text').textContent = formatted.fullText
-      document.getElementById('box-edit-date').hidden = true
 
-      showToast('✓ Datum korrigiert')
+      showToast('✓ Datum aktualisiert')
       loadOpenItems()
     } catch (err) {
       showToast(err.message || 'Fehler beim Speichern des Datums.')
       console.error('Update item date failed:', err)
-    } finally {
-      btn.disabled = false
     }
   })
 
