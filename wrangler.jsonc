@@ -7,6 +7,9 @@
     "directory": "./public",
     "binding": "ASSETS"
   },
+  "cache": {
+    "enabled": true
+  },
   "d1_databases": [
     {
       "binding": "DB",

@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { Bindings, Item, Product, ProductDetails, ProductDetailResponse } from './types'
+import { toProxiedImageUrl } from './proxy'
 
 export const productRoutes = new Hono<{ Bindings: Bindings }>()
 
@@ -22,7 +23,7 @@ async function fetchFromOpenFoodFacts(barcode: string): Promise<OpenFoodFactsDet
     const response = await fetch(url, {
       signal: controller.signal,
       headers: {
-        'User-Agent': 'NomNomFoodTracker/1.0 (https://github.com/NomNom)',
+        'User-Agent': 'NomNom/1.0',
         'Accept': 'application/json'
       }
     })
@@ -253,7 +254,10 @@ productRoutes.get('/:barcode', async (c) => {
   const response: ProductDetailResponse = {
     product,
     currentItem: currentItem || null,
-    details: details || null
+    details: details ? {
+      ...details,
+      image_url: toProxiedImageUrl(details.image_url)
+    } : null
   }
 
   return c.json(response)
@@ -296,7 +300,10 @@ productRoutes.post('/:barcode/refresh', async (c) => {
     success: true,
     product,
     currentItem: currentItem || null,
-    details: details || null
+    details: details ? {
+      ...details,
+      image_url: toProxiedImageUrl(details.image_url)
+    } : null
   })
 })
 
@@ -349,7 +356,10 @@ productRoutes.post('/', async (c) => {
   return c.json({
     product,
     currentItem: currentItem || null,
-    details: details || null
+    details: details ? {
+      ...details,
+      image_url: toProxiedImageUrl(details.image_url)
+    } : null
   }, 201)
 })
 

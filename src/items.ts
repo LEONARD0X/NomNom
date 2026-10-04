@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { Bindings, Item, OpenItemView } from './types'
+import { toProxiedImageUrl } from './proxy'
 
 export const itemRoutes = new Hono<{ Bindings: Bindings }>()
 
@@ -30,7 +31,10 @@ itemRoutes.get('/', async (c) => {
         ORDER BY items.opened_at DESC
       `)
       .all<OpenItemView>()
-    items = results || []
+    items = (results || []).map(it => ({
+      ...it,
+      image_url: toProxiedImageUrl(it.image_url)
+    }))
   } catch (err: any) {
     if (err.message && err.message.includes('product_details')) {
       const { results } = await db

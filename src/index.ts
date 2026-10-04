@@ -5,6 +5,7 @@ import { Bindings } from './types'
 import { authMiddleware } from './auth'
 import { productRoutes } from './products'
 import { itemRoutes } from './items'
+import { proxyRoutes } from './proxy'
 
 const app = new Hono<{ Bindings: Bindings }>()
 
@@ -13,6 +14,14 @@ app.use('*', logger())
 
 // Enable CORS for flexibility
 app.use('*', cors())
+
+// Prevent dynamic API endpoints from being cached by Workers Cache (proxy routes manage their own cache headers)
+app.use('/api/*', async (c, next) => {
+  await next()
+  if (!c.req.path.startsWith('/api/proxy/')) {
+    c.header('Cache-Control', 'no-store, no-cache, must-revalidate')
+  }
+})
 
 // Global error handler: catches all unhandled exceptions and logs detailed stack traces to Cloudflare Logs
 app.onError((err, c) => {
@@ -90,10 +99,11 @@ app.get('/api/health', async (c) => {
   }, isHealthy ? 200 : 503)
 })
 
-// Protect all /api/* routes with household Bearer token
+// Protect all /api/* routes with household Bearer token (authMiddleware exempts /api/health and /api/proxy/*)
 app.use('/api/*', authMiddleware)
 
 // Mount API routes
+app.route('/api/proxy', proxyRoutes)
 app.route('/api/products', productRoutes)
 app.route('/api/items', itemRoutes)
 

@@ -2,8 +2,8 @@ import { Context, Next } from 'hono'
 import { Bindings } from './types'
 
 export async function authMiddleware(c: Context<{ Bindings: Bindings }>, next: Next) {
-  // Allow health endpoint to be public for reachability & diagnostics check
-  if (c.req.path === '/api/health') {
+  // Allow health check and cached image proxy to be public
+  if (c.req.path === '/api/health' || c.req.path.startsWith('/api/proxy/')) {
     return next()
   }
 
