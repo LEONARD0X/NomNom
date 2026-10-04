@@ -426,8 +426,6 @@ function switchView(viewName) {
 
   if (viewName === 'scanner') {
     startScannerMode()
-  } else if (viewName === 'list') {
-    loadOpenItems()
   }
 }
 
@@ -784,6 +782,7 @@ function setupEventListeners() {
       await api.finishItem(currentItem.id)
       showToast('✓ Als erledigt markiert')
       switchView('list')
+      loadOpenItems()
     } catch (err) {
       showToast(err.message || 'Fehler beim Markieren als erledigt.')
       console.error('Finish item failed:', err)
@@ -803,6 +802,7 @@ function setupEventListeners() {
       await api.reregisterItem(currentItem.id)
       showToast('↻ Neu registriert')
       switchView('list')
+      loadOpenItems()
     } catch (err) {
       showToast(err.message || 'Fehler beim Neu-Registrieren.')
       console.error('Reregister item failed:', err)
@@ -822,6 +822,7 @@ function setupEventListeners() {
       await api.openItem(product.id)
       showToast('Geöffnet')
       switchView('list')
+      loadOpenItems()
     } catch (err) {
       showToast(err.message || 'Fehler beim Öffnen des Produkts.')
       console.error('Open item failed:', err)
@@ -849,6 +850,7 @@ function setupEventListeners() {
 
       showToast(`"${product.name}" gespeichert und geöffnet`)
       switchView('list')
+      loadOpenItems()
     } catch (err) {
       showToast(err.message || 'Fehler beim Speichern des Produkts.')
       console.error('Save and open failed:', err)
@@ -917,6 +919,7 @@ function setupEventListeners() {
 
       showToast('Einstellungen gespeichert')
       switchView('list')
+      loadOpenItems()
     } catch (err) {
       console.error('Settings test failed:', err)
       const errorMsg = err.message || 'Verbindungstest fehlgeschlagen.'
@@ -981,6 +984,7 @@ function setupEventListeners() {
       modalOnboarding.hidden = true
       showToast('Erfolgreich verbunden!')
       switchView('list')
+      loadOpenItems()
     } catch (err) {
       console.error('Onboarding connection failed:', err)
       const errorMsg = err.message || 'Server nicht erreichbar.'
@@ -1013,6 +1017,7 @@ function initApp() {
 
   if (checkAuth()) {
     switchView('list')
+    loadOpenItems()
   }
 }
 
