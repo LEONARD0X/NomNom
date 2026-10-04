@@ -1,5 +1,5 @@
 // NomNom Service Worker - App Shell Caching
-const CACHE_NAME = 'nomnom-v7'
+const CACHE_NAME = 'nomnom-v8'
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -38,8 +38,8 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url)
 
-  // API calls are never cached
-  if (url.pathname.startsWith('/api/')) {
+  // API calls and cross-origin requests (e.g. OpenFoodFacts images) are handled directly
+  if (url.origin !== self.location.origin || url.pathname.startsWith('/api/')) {
     return
   }
 

@@ -60,6 +60,12 @@ const api = {
     return this.request(`/api/products/${encodeURIComponent(barcode)}`)
   },
 
+  refreshProduct(barcode) {
+    return this.request(`/api/products/${encodeURIComponent(barcode)}/refresh`, {
+      method: 'POST'
+    })
+  },
+
   createProduct(barcode, name) {
     return this.request('/api/products', {
       method: 'POST',
@@ -596,8 +602,13 @@ function renderItemsList(items) {
     if (formatted.ageDays <= 1) badgeClass += ' badge-fresh'
     else if (formatted.ageDays >= 4) badgeClass += ' badge-older'
 
+    const mediaHtml = item.image_url
+      ? `<img class="item-thumb-img" src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.name)}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+         <div class="item-emoji" style="display:none;" aria-hidden="true">${emoji}</div>`
+      : `<div class="item-emoji" aria-hidden="true">${emoji}</div>`
+
     li.innerHTML = `
-      <div class="item-emoji" aria-hidden="true">${emoji}</div>
+      ${mediaHtml}
       <div class="item-info">
         <div class="item-title">${escapeHtml(item.name)}</div>
         <div class="item-time-row">
@@ -691,12 +702,99 @@ async function handleBarcodeDetected(barcode) {
   }
 }
 
+// Render Nutrition Card & Badges
+function renderNutritionCard(details) {
+  const card = document.getElementById('card-nutrition')
+  const nsContainer = document.getElementById('nutriscore-badge-container')
+  const novaContainer = document.getElementById('nova-badge-container')
+  const tableSection = document.getElementById('nutrition-table-section')
+  const tableBody = document.getElementById('nutrition-table-body')
+  const ingredientsSection = document.getElementById('nutrition-ingredients-section')
+  const ingredientsText = document.getElementById('nutrition-ingredients-text')
+
+  if (!card) return
+
+  if (!details || (!details.nutriscore_grade && !details.nova_group && !details.nutriments_json && !details.ingredients)) {
+    card.hidden = true
+    return
+  }
+
+  card.hidden = false
+
+  // 1. Nutri-Score badge
+  if (details.nutriscore_grade) {
+    const grade = String(details.nutriscore_grade).toLowerCase().trim()
+    nsContainer.hidden = false
+    nsContainer.innerHTML = `
+      <span class="nutriscore-badge nutriscore-${grade}">
+        <span class="ns-label">NUTRI-SCORE</span>
+        <span class="ns-grade">${grade.toUpperCase()}</span>
+      </span>
+    `
+  } else {
+    nsContainer.hidden = true
+    nsContainer.innerHTML = ''
+  }
+
+  // 2. NOVA badge
+  if (details.nova_group) {
+    novaContainer.hidden = false
+    novaContainer.innerHTML = `
+      <span class="nova-badge nova-${details.nova_group}">NOVA ${details.nova_group}</span>
+    `
+  } else {
+    novaContainer.hidden = true
+    novaContainer.innerHTML = ''
+  }
+
+  // 3. Nutriments Table
+  let hasNutriments = false
+  tableBody.innerHTML = ''
+  if (details.nutriments_json) {
+    try {
+      const nm = typeof details.nutriments_json === 'string' ? JSON.parse(details.nutriments_json) : details.nutriments_json
+      const rows = []
+      if (nm.energyKcal != null) rows.push({ name: 'Energie', val: `${Math.round(nm.energyKcal)} kcal` })
+      if (nm.fat != null) rows.push({ name: 'Fett', val: `${Number(nm.fat).toFixed(1)} g` })
+      if (nm.saturatedFat != null) rows.push({ name: 'davon gesättigte Fettsäuren', val: `${Number(nm.saturatedFat).toFixed(1)} g`, sub: true })
+      if (nm.carbohydrates != null) rows.push({ name: 'Kohlenhydrate', val: `${Number(nm.carbohydrates).toFixed(1)} g` })
+      if (nm.sugars != null) rows.push({ name: 'davon Zucker', val: `${Number(nm.sugars).toFixed(1)} g`, sub: true })
+      if (nm.fiber != null) rows.push({ name: 'Ballaststoffe', val: `${Number(nm.fiber).toFixed(1)} g` })
+      if (nm.proteins != null) rows.push({ name: 'Eiweiß', val: `${Number(nm.proteins).toFixed(1)} g` })
+      if (nm.salt != null) rows.push({ name: 'Salz', val: `${Number(nm.salt).toFixed(2)} g` })
+
+      if (rows.length > 0) {
+        hasNutriments = true
+        tableBody.innerHTML = rows.map(r => `
+          <tr class="${r.sub ? 'sub-nutrient' : ''}">
+            <td class="nutrient-name">${escapeHtml(r.name)}</td>
+            <td class="nutrient-val">${escapeHtml(r.val)}</td>
+          </tr>
+        `).join('')
+      }
+    } catch (err) {
+      console.warn('Failed to parse nutriments_json:', err)
+    }
+  }
+  tableSection.hidden = !hasNutriments
+
+  // 4. Ingredients
+  if (details.ingredients) {
+    ingredientsSection.hidden = false
+    ingredientsText.textContent = details.ingredients
+  } else {
+    ingredientsSection.hidden = true
+    ingredientsText.textContent = ''
+  }
+}
+
 // Show Product Detail View (Case A: Already open, Case B: Currently closed)
 function showProductDetail(productData) {
   const { product, currentItem } = productData
   appState.selectedProductData = productData
 
   const emojiEl = document.getElementById('detail-emoji')
+  const imageEl = document.getElementById('detail-image')
   const nameEl = document.getElementById('detail-name')
   const barcodeEl = document.getElementById('detail-barcode')
 
@@ -712,9 +810,37 @@ function showProductDetail(productData) {
   const actionsOpened = document.getElementById('actions-opened')
   const actionsClosed = document.getElementById('actions-closed')
 
-  emojiEl.textContent = getFoodEmoji(product.name)
+  // Product Image or Emoji Fallback
+  if (productData.details?.image_url) {
+    imageEl.src = productData.details.image_url
+    imageEl.hidden = false
+    emojiEl.hidden = true
+    imageEl.onerror = () => {
+      imageEl.hidden = true
+      emojiEl.hidden = false
+      emojiEl.textContent = getFoodEmoji(product.name)
+    }
+  } else {
+    imageEl.hidden = true
+    emojiEl.hidden = false
+    emojiEl.textContent = getFoodEmoji(product.name)
+  }
+
   nameEl.textContent = product.name
   barcodeEl.textContent = `Barcode: ${product.barcode}`
+
+  // Render nutrition details
+  renderNutritionCard(productData.details)
+
+  // Reset nutrition accordion state
+  const nutritionDrawer = document.getElementById('nutrition-drawer')
+  const nutritionCard = document.getElementById('card-nutrition')
+  const btnNutritionToggle = document.getElementById('btn-nutrition-toggle')
+  if (nutritionDrawer && nutritionCard && btnNutritionToggle) {
+    nutritionDrawer.hidden = true
+    nutritionCard.classList.remove('expanded')
+    btnNutritionToggle.setAttribute('aria-expanded', 'false')
+  }
 
   const nowLocalStr = toLocalDatetimeInputString(new Date())
 
@@ -763,7 +889,7 @@ function showProductDetail(productData) {
 }
 
 // Open Detail View directly from a list item
-function openProductDetailFromItem(item) {
+async function openProductDetailFromItem(item) {
   const productData = {
     product: {
       id: item.product_id,
@@ -777,9 +903,21 @@ function openProductDetailFromItem(item) {
       opened_at: item.opened_at,
       finished_at: null,
       created_at: item.created_at
-    }
+    },
+    details: item.image_url ? { image_url: item.image_url } : null
   }
   showProductDetail(productData)
+
+  // Asynchronously fetch full product details (Nutri-Score, nutriments, ingredients)
+  try {
+    const fullData = await api.getProduct(item.barcode)
+    if (appState.currentView === 'product' && appState.selectedProductData?.product.barcode === item.barcode) {
+      appState.selectedProductData = fullData
+      showProductDetail(fullData)
+    }
+  } catch (err) {
+    console.warn('Could not load full product details for item:', err)
+  }
 }
 
 // Show New Product Form for unknown barcodes
@@ -874,6 +1012,65 @@ function setupEventListeners() {
   document.getElementById('btn-product-back').addEventListener('click', () => {
     switchView('list')
   })
+
+  // Nutrition Accordion Toggle
+  const btnNutritionToggle = document.getElementById('btn-nutrition-toggle')
+  if (btnNutritionToggle) {
+    btnNutritionToggle.addEventListener('click', () => {
+      const drawer = document.getElementById('nutrition-drawer')
+      const card = document.getElementById('card-nutrition')
+      const isNowExpanded = drawer.hidden
+      drawer.hidden = !isNowExpanded
+      card.classList.toggle('expanded', isNowExpanded)
+      btnNutritionToggle.setAttribute('aria-expanded', isNowExpanded ? 'true' : 'false')
+    })
+  }
+
+  // Subtle OpenFoodFacts Refresh Button
+  const btnRefreshOff = document.getElementById('btn-refresh-off')
+  if (btnRefreshOff) {
+    btnRefreshOff.addEventListener('click', async () => {
+      const barcode = appState.selectedProductData?.product?.barcode
+      if (!barcode) return
+
+      btnRefreshOff.classList.add('loading')
+      const labelEl = document.getElementById('btn-refresh-off-label')
+      const originalText = labelEl ? labelEl.textContent : 'Daten von OpenFoodFacts aktualisieren'
+      if (labelEl) labelEl.textContent = 'Aktualisiere...'
+
+      try {
+        const res = await api.refreshProduct(barcode)
+        if (res.success) {
+          appState.selectedProductData.details = res.details
+          if (res.product) {
+            appState.selectedProductData.product = res.product
+          }
+          showProductDetail(appState.selectedProductData)
+
+          // Automatically expand drawer so the user sees the fresh data
+          const drawer = document.getElementById('nutrition-drawer')
+          const card = document.getElementById('card-nutrition')
+          if (drawer && card && res.details) {
+            drawer.hidden = false
+            card.classList.add('expanded')
+            btnNutritionToggle?.setAttribute('aria-expanded', 'true')
+          }
+
+          showToast('✓ Daten von OpenFoodFacts aktualisiert')
+          // Also refresh list in background if image or name changed
+          loadOpenItems()
+        } else {
+          showToast(res.error || 'Keine aktuellen Daten bei OpenFoodFacts gefunden.')
+        }
+      } catch (err) {
+        console.error('Refresh from OpenFoodFacts failed:', err)
+        showToast(err.message || 'Aktualisierung von OpenFoodFacts fehlgeschlagen.')
+      } finally {
+        btnRefreshOff.classList.remove('loading')
+        if (labelEl) labelEl.textContent = originalText
+      }
+    })
+  }
 
   // New Product Back Button
   document.getElementById('btn-new-product-back').addEventListener('click', () => {

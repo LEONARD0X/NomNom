@@ -425,6 +425,32 @@ body {
   margin-right: 14px;
 }
 
+.item-thumb-img {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  background: #ffffff;
+  border: 1px solid var(--border-light);
+  object-fit: contain;
+  flex-shrink: 0;
+  margin-right: 14px;
+  padding: 2px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+:root[data-theme="dark"] .item-thumb-img,
+html.dark .item-thumb-img {
+  background: #2a2723;
+  border-color: var(--border-subtle);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not(.light) .item-thumb-img {
+    background: #2a2723;
+    border-color: var(--border-subtle);
+  }
+}
+
 .item-info {
   flex: 1;
   min-width: 0;
@@ -788,6 +814,13 @@ body {
   margin-bottom: 24px;
 }
 
+.detail-media {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
 .detail-emoji {
   width: 76px;
   height: 76px;
@@ -798,7 +831,30 @@ body {
   align-items: center;
   justify-content: center;
   font-size: 2.8rem;
-  margin-bottom: 14px;
+}
+
+.detail-product-image {
+  width: 100px;
+  height: 100px;
+  border-radius: var(--radius-md);
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  object-fit: contain;
+  padding: 6px;
+  box-shadow: var(--shadow-sm);
+}
+
+:root[data-theme="dark"] .detail-product-image,
+html.dark .detail-product-image {
+  background: #2a2723;
+  border-color: var(--border-subtle);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not(.light) .detail-product-image {
+    background: #2a2723;
+    border-color: var(--border-subtle);
+  }
 }
 
 .detail-name {
@@ -921,6 +977,227 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+/* Nutrition Card & Accordion */
+.nutrition-card {
+  margin-top: 18px;
+  background: var(--bg-canvas);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.nutrition-card.expanded {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.nutrition-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  user-select: none;
+  transition: background-color 0.15s ease;
+}
+
+.nutrition-header:hover {
+  background-color: var(--bg-card-hover);
+}
+
+.nutrition-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.nutrition-header-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.nutrition-chevron {
+  color: var(--text-muted);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+
+.nutrition-card.expanded .nutrition-chevron {
+  transform: rotate(180deg);
+  color: var(--primary);
+}
+
+.nutrition-drawer {
+  padding: 4px 16px 16px;
+  border-top: 1px dashed var(--border-subtle);
+  animation: fadeIn 0.15s ease-out;
+}
+
+/* Nutri-Score Authentic Badges */
+.nutriscore-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-weight: 800;
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.nutriscore-badge .ns-label {
+  font-size: 0.65rem;
+  opacity: 0.92;
+  letter-spacing: 0.03em;
+}
+
+.nutriscore-badge .ns-grade {
+  font-size: 0.84rem;
+  text-transform: uppercase;
+}
+
+.nutriscore-a { background: #038141; }
+.nutriscore-b { background: #85bb2f; }
+.nutriscore-c { background: #fecb02; color: #1c1917; }
+.nutriscore-d { background: #ee8100; }
+.nutriscore-e { background: #e63e11; }
+
+/* NOVA Group Badges */
+.nova-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.nova-1 { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+.nova-2 { background: #fffde7; color: #f57f17; border: 1px solid #fff9c4; }
+.nova-3 { background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2; }
+.nova-4 { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+
+:root[data-theme="dark"] .nova-1, html.dark .nova-1 { background: rgba(46, 125, 50, 0.2); color: #a5d6a7; border-color: rgba(46, 125, 50, 0.35); }
+:root[data-theme="dark"] .nova-2, html.dark .nova-2 { background: rgba(245, 127, 23, 0.2); color: #fff59d; border-color: rgba(245, 127, 23, 0.35); }
+:root[data-theme="dark"] .nova-3, html.dark .nova-3 { background: rgba(230, 81, 0, 0.2); color: #ffcc80; border-color: rgba(230, 81, 0, 0.35); }
+:root[data-theme="dark"] .nova-4, html.dark .nova-4 { background: rgba(198, 40, 40, 0.2); color: #ef9a9a; border-color: rgba(198, 40, 40, 0.35); }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not(.light) .nova-1 { background: rgba(46, 125, 50, 0.2); color: #a5d6a7; border-color: rgba(46, 125, 50, 0.35); }
+  :root:not([data-theme="light"]):not(.light) .nova-2 { background: rgba(245, 127, 23, 0.2); color: #fff59d; border-color: rgba(245, 127, 23, 0.35); }
+  :root:not([data-theme="light"]):not(.light) .nova-3 { background: rgba(230, 81, 0, 0.2); color: #ffcc80; border-color: rgba(230, 81, 0, 0.35); }
+  :root:not([data-theme="light"]):not(.light) .nova-4 { background: rgba(198, 40, 40, 0.2); color: #ef9a9a; border-color: rgba(198, 40, 40, 0.35); }
+}
+
+/* Nutrition Table & Ingredients */
+.nutrition-section {
+  margin-top: 14px;
+}
+
+.nutrition-subtitle {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.nutrition-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+
+.nutrition-table tr {
+  border-bottom: 1px solid var(--border-light);
+}
+
+.nutrition-table tr:last-child {
+  border-bottom: none;
+}
+
+.nutrition-table td {
+  padding: 6px 4px;
+  color: var(--text-secondary);
+}
+
+.nutrition-table td.nutrient-val {
+  text-align: right;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.nutrition-table tr.sub-nutrient td.nutrient-name {
+  padding-left: 14px;
+  color: var(--text-muted);
+}
+
+.nutrition-ingredients-text {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  word-break: break-word;
+  background: var(--bg-card-subtle);
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+}
+
+/* Subtle OpenFoodFacts Refresh Button */
+.detail-refresh-section {
+  margin-top: 14px;
+  display: flex;
+  justify-content: center;
+}
+
+.btn-subtle-refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.btn-subtle-refresh:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-secondary);
+  border-color: var(--text-secondary);
+}
+
+.btn-subtle-refresh:active {
+  transform: scale(0.97);
+}
+
+.btn-subtle-refresh.loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.btn-subtle-refresh.loading .refresh-off-icon {
+  animation: spin 0.8s linear infinite;
 }
 
 .btn {

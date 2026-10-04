@@ -11,23 +11,50 @@ itemRoutes.get('/', async (c) => {
     return c.json({ error: 'D1 Datenbank-Binding "DB" fehlt in der Worker-Konfiguration.', code: 'DB_BINDING_MISSING' }, 500)
   }
 
-  const { results } = await db
-    .prepare(`
-      SELECT
-        items.id,
-        items.product_id,
-        items.opened_at,
-        items.created_at,
-        products.barcode,
-        products.name
-      FROM items
-      JOIN products ON items.product_id = products.id
-      WHERE items.finished_at IS NULL
-      ORDER BY items.opened_at DESC
-    `)
-    .all<OpenItemView>()
+  let items: OpenItemView[] = []
+  try {
+    const { results } = await db
+      .prepare(`
+        SELECT
+          items.id,
+          items.product_id,
+          items.opened_at,
+          items.created_at,
+          products.barcode,
+          products.name,
+          product_details.image_url
+        FROM items
+        JOIN products ON items.product_id = products.id
+        LEFT JOIN product_details ON products.id = product_details.product_id
+        WHERE items.finished_at IS NULL
+        ORDER BY items.opened_at DESC
+      `)
+      .all<OpenItemView>()
+    items = results || []
+  } catch (err: any) {
+    if (err.message && err.message.includes('product_details')) {
+      const { results } = await db
+        .prepare(`
+          SELECT
+            items.id,
+            items.product_id,
+            items.opened_at,
+            items.created_at,
+            products.barcode,
+            products.name
+          FROM items
+          JOIN products ON items.product_id = products.id
+          WHERE items.finished_at IS NULL
+          ORDER BY items.opened_at DESC
+        `)
+        .all<OpenItemView>()
+      items = results || []
+    } else {
+      throw err
+    }
+  }
 
-  return c.json({ items: results })
+  return c.json({ items })
 })
 
 // POST /api/items - Open a new item for a product
