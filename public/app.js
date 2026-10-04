@@ -379,6 +379,60 @@ function showToast(message, duration = 2800) {
   }, duration)
 }
 
+// --- 3b. Theme Manager (Light, Dark, System) ---
+const themeManager = {
+  currentTheme: 'system',
+
+  init() {
+    this.currentTheme = localStorage.getItem('nomnom_theme') || 'system'
+    this.applyTheme(this.currentTheme)
+
+    try {
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+        if (this.currentTheme === 'system') {
+          this.applyTheme('system')
+        }
+      })
+    } catch (_) {}
+  },
+
+  setTheme(theme) {
+    if (!['system', 'light', 'dark'].includes(theme)) return
+    this.currentTheme = theme
+    localStorage.setItem('nomnom_theme', theme)
+    this.applyTheme(theme)
+  },
+
+  applyTheme(theme) {
+    const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+
+    document.documentElement.setAttribute('data-theme', theme)
+    if (isDark) {
+      document.documentElement.classList.add('dark')
+      document.documentElement.classList.remove('light')
+    } else {
+      document.documentElement.classList.remove('dark')
+      document.documentElement.classList.add('light')
+    }
+
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', isDark ? '#171513' : '#f8f7f4')
+    }
+
+    this.updateUI(theme)
+  },
+
+  updateUI(theme) {
+    const options = document.querySelectorAll('.theme-option')
+    options.forEach(btn => {
+      const isSelected = btn.dataset.theme === theme
+      btn.classList.toggle('active', isSelected)
+      btn.setAttribute('aria-checked', isSelected ? 'true' : 'false')
+    })
+  }
+}
+
 // --- 4. Main App State & Controller ---
 const appState = {
   currentView: 'list',
@@ -864,7 +918,18 @@ function setupEventListeners() {
     setFormError('settings-error-box', '')
     document.getElementById('input-server-url').value = api.baseUrl
     document.getElementById('input-auth-token').value = api.token
+    themeManager.updateUI(themeManager.currentTheme)
     switchView('settings')
+  })
+
+  // Theme selector buttons
+  document.querySelectorAll('.theme-option').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const theme = btn.dataset.theme
+      if (theme) {
+        themeManager.setTheme(theme)
+      }
+    })
   })
 
   // Settings Back Button
@@ -1012,6 +1077,7 @@ function registerServiceWorker() {
 
 // Initialize App
 function initApp() {
+  themeManager.init()
   setupEventListeners()
   registerServiceWorker()
 
